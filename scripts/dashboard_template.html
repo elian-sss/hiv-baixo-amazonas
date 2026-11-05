@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HIV Baixo Amazonas</title>
+<meta name="description" content="Painel de notificações de HIV (SINAN) para a vigilância epidemiológica da SESPA, Região do Baixo Amazonas.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f4f4f1; --surface:#fcfcfb; --surface-2:#efeee9; --border:#d9d8d2;
+  --text:#1b1b1a; --text-2:#52514e; --text-3:#6b6a66;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6;
+  --s1-claro:#a9c9f0; --neutro:#8a8985;
+  --ok:#0a6b2c; --ok-bg:#e3f3e8; --warn:#8a4b00; --warn-bg:#fdf0d8; --crit:#a61b1b; --crit-bg:#fbe4e2;
+  --foco:#2a78d6; --grade:#e4e3df;
+  --heat-0:#f3f7fd; --heat-1:#0d3a73;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#121211; --surface:#1a1a19; --surface-2:#252523; --border:#3a3a37;
+    --text:#f0efec; --text-2:#c3c2b7; --text-3:#a8a79e;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9;
+    --s1-claro:#2b4a70; --neutro:#8f8e88;
+    --ok:#7fd99a; --ok-bg:#163322; --warn:#f3c26b; --warn-bg:#3a2a0e; --crit:#ff9a92; --crit-bg:#3d1615;
+    --foco:#7fb4f5; --grade:#2f2f2c;
+    --heat-0:#1d2633; --heat-1:#7fb4f5;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#121211; --surface:#1a1a19; --surface-2:#252523; --border:#3a3a37;
+  --text:#f0efec; --text-2:#c3c2b7; --text-3:#a8a79e;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9;
+  --s1-claro:#2b4a70; --neutro:#8f8e88;
+  --ok:#7fd99a; --ok-bg:#163322; --warn:#f3c26b; --warn-bg:#3a2a0e; --crit:#ff9a92; --crit-bg:#3d1615;
+  --foco:#7fb4f5; --grade:#2f2f2c;
+  --heat-0:#1d2633; --heat-1:#7fb4f5;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+.desab{opacity:.45;pointer-events:none}
+select:disabled{opacity:.45}
+html{font-size:16px}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;line-height:1.45}
+a{color:var(--s1)}
+:focus-visible{outline:3px solid var(--foco);outline-offset:2px;border-radius:4px}
+.pular{position:absolute;left:-999px;top:0;background:var(--surface);padding:.6rem 1rem;z-index:10}
+.pular:focus{left:1rem}
+.wrap{max-width:1280px;margin:0 auto;padding:0 16px}
+header.topo{background:var(--surface);border-bottom:1px solid var(--border)}
+header.topo .wrap{display:flex;flex-wrap:wrap;gap:.25rem 1.5rem;align-items:baseline;justify-content:space-between;padding-top:1rem;padding-bottom:.75rem}
+h1{font-size:1.35rem;margin:0}
+.sub{color:var(--text-2);font-size:.9rem;margin:0}
+.aviso{display:flex;gap:.6rem;align-items:flex-start;border-radius:10px;padding:.7rem .9rem;margin:.75rem 0;font-size:.92rem}
+.aviso.info{background:var(--surface-2);border:1px solid var(--border)}
+.aviso.warn{background:var(--warn-bg);color:var(--text);border:1px solid var(--warn)}
+.aviso .ic{font-weight:700;flex:none}
+nav.abas{display:flex;gap:.25rem;overflow-x:auto;border-bottom:1px solid var(--border);margin-top:.5rem}
+nav.abas button{appearance:none;border:0;background:none;color:var(--text-2);font:inherit;font-weight:600;padding:.75rem 1rem;min-height:44px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+nav.abas button[aria-selected="true"]{color:var(--text);border-bottom-color:var(--s1)}
+.filtros{background:var(--bg);border-bottom:1px solid var(--border);padding:.6rem 0}
+@media (min-width:1000px) and (min-height:700px){.filtros{position:sticky;top:0;z-index:5}}
+.filtros .linha{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:flex-end}
+.campo{display:flex;flex-direction:column;gap:.2rem;font-size:.85rem;color:var(--text-2)}
+.campo>span{font-weight:600}
+select,.drop>summary,button.btn{font:inherit;font-size:.92rem;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:8px;min-height:44px;padding:.45rem .7rem}
+.anos{display:flex;gap:.35rem;align-items:center}
+.drop{position:relative}
+.drop>summary{list-style:none;cursor:pointer;min-width:12rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+.drop>summary::-webkit-details-marker{display:none}
+.drop>summary::after{content:"▾";color:var(--text-3)}
+.drop .painel{position:absolute;top:calc(100% + 4px);left:0;z-index:20;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.6rem;min-width:16rem;max-height:60vh;overflow:auto;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.drop .atalhos{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.4rem}
+.drop .atalhos button{min-height:36px;font-size:.85rem}
+.drop label{display:flex;gap:.5rem;align-items:center;padding:.35rem .2rem;min-height:36px;color:var(--text);font-size:.92rem}
+.drop label small{color:var(--text-3);margin-left:auto}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--s1)}
+button.btn{cursor:pointer}
+button.btn:hover{background:var(--surface-2)}
+.recorte{margin-top:.5rem;font-size:.85rem;color:var(--text-2)}
+.recorte b{color:var(--text)}
+main{padding:1rem 0 2rem}
+section.aba[hidden]{display:none}
+h2{font-size:1.15rem;margin:1.25rem 0 .5rem}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.75rem;margin:.5rem 0 1rem}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.85rem 1rem}
+.kpi .rot{font-size:.82rem;color:var(--text-2);font-weight:600}
+.kpi .val{font-size:1.75rem;font-weight:700;margin:.15rem 0;font-variant-numeric:tabular-nums}
+.kpi .val.insuf{font-size:1.05rem;color:var(--text-2);font-weight:600}
+.kpi .det{font-size:.8rem;color:var(--text-3)}
+.grade{display:grid;grid-template-columns:repeat(12,1fr);gap:.75rem}
+.c12{grid-column:span 12}.c8{grid-column:span 8}.c7{grid-column:span 7}.c6{grid-column:span 6}.c5{grid-column:span 5}.c4{grid-column:span 4}
+@media (max-width:900px){.c8,.c7,.c6,.c5,.c4{grid-column:span 12}}
+figure.card{margin:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.9rem 1rem;min-width:0}
+figure.card figcaption{font-weight:700;font-size:.98rem;margin-bottom:.15rem}
+figure.card .nota{font-size:.8rem;color:var(--text-3);margin:.15rem 0 .5rem}
+.grafico{position:relative;height:300px}
+.grafico.alto{height:420px}
+.legenda{display:flex;flex-wrap:wrap;gap:.35rem .9rem;font-size:.82rem;color:var(--text-2);margin:.4rem 0}
+.legenda span{display:inline-flex;align-items:center;gap:.35rem}
+.legenda i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.legenda i.hach{background:repeating-linear-gradient(45deg,var(--s1) 0 2px,transparent 2px 5px);border:1.5px solid var(--s1)}
+details.tabela{margin-top:.5rem}
+details.tabela>summary{cursor:pointer;color:var(--s1);font-size:.85rem;font-weight:600;min-height:32px;display:inline-flex;align-items:center}
+.rolagem{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.86rem;font-variant-numeric:tabular-nums}
+th,td{padding:.4rem .5rem;border-bottom:1px solid var(--grade);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{color:var(--text-2);font-weight:600;border-bottom:1px solid var(--border)}
+tfoot td{font-weight:700}
+.selo{display:inline-flex;gap:.3rem;align-items:center;font-weight:600;border-radius:999px;padding:.1rem .55rem;font-size:.8rem}
+.selo.ok{color:var(--ok);background:var(--ok-bg)}
+.selo.warn{color:var(--warn);background:var(--warn-bg)}
+.selo.crit{color:var(--crit);background:var(--crit-bg)}
+table.calor td.cel{text-align:center;min-width:3.2rem}
+table.calor th:first-child,table.calor td:first-child{position:sticky;left:0;background:var(--surface)}
+.insuf{color:var(--text-3);font-style:italic}
+.sem-grafico{padding:1rem;background:var(--surface-2);border-radius:8px;font-size:.9rem}
+.notas{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem}
+.notas h3{font-size:1rem;margin:1.1rem 0 .4rem}
+.notas li{margin:.25rem 0}
+footer{border-top:1px solid var(--border);background:var(--surface);color:var(--text-2);font-size:.85rem}
+footer .wrap{padding-top:1rem;padding-bottom:1.5rem}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<a class="pular" href="#conteudo">Pular para o conteúdo</a>
+<header class="topo">
+  <div class="wrap">
+    <div>
+      <h1 id="titulo">HIV</h1>
+      <p class="sub" id="subtitulo"></p>
+    </div>
+    <p class="sub" id="atualizacao"></p>
+  </div>
+  <div class="wrap">
+    <div class="aviso info" role="note"><span class="ic" aria-hidden="true">ⓘ</span>
+      <div><b>Notificação não é incidência.</b> Os números mostram casos de HIV <b>notificados</b> no SINAN, não todas as pessoas que vivem com HIV ou se infectaram. Há subnotificação, e o total depende da oferta de testagem e da qualidade do registro em cada município.</div>
+    </div>
+    <nav class="abas" role="tablist" aria-label="Seções do painel">
+      <button role="tab" id="t-geral" aria-controls="p-geral" aria-selected="true">Visão Geral</button>
+      <button role="tab" id="t-perfil" aria-controls="p-perfil" aria-selected="false" tabindex="-1">Perfil dos casos</button>
+      <button role="tab" id="t-mun" aria-controls="p-mun" aria-selected="false" tabindex="-1">Comparação entre municípios</button>
+      <button role="tab" id="t-notas" aria-controls="p-notas" aria-selected="false" tabindex="-1">Notas metodológicas</button>
+    </nav>
+  </div>
+</header>
+
+<div class="filtros" id="filtros" role="region" aria-label="Filtros">
+  <div class="wrap">
+    <div class="linha">
+      <div class="campo"><span id="l-ano">Ano de notificação</span>
+        <div class="anos" role="group" aria-labelledby="l-ano">
+          <select id="f-ano-ini" aria-label="Ano inicial"></select>
+          <span aria-hidden="true">até</span>
+          <select id="f-ano-fim" aria-label="Ano final"></select>
+        </div>
+      </div>
+      <div class="campo"><span id="l-mun">Município de residência</span>
+        <details class="drop" id="d-mun">
+          <summary aria-labelledby="l-mun" id="s-mun">Todos</summary>
+          <div class="painel">
+            <div class="atalhos">
+              <button type="button" class="btn" data-mun="todos">Todos</button>
+              <button type="button" class="btn" data-mun="polo" id="b-polo"></button>
+              <button type="button" class="btn" data-mun="demais" id="b-demais"></button>
+            </div>
+            <div id="lista-mun"></div>
+          </div>
+        </details>
+      </div>
+      <div class="campo"><label for="f-sexo"><span>Sexo</span></label>
+        <select id="f-sexo"></select>
+      </div>
+      <div class="campo"><span id="l-faixa">Faixa etária</span>
+        <details class="drop" id="d-faixa">
+          <summary aria-labelledby="l-faixa" id="s-faixa">Todas</summary>
+          <div class="painel">
+            <div class="atalhos"><button type="button" class="btn" id="b-faixa-todas">Todas</button></div>
+            <div id="lista-faixa"></div>
+          </div>
+        </details>
+      </div>
+      <button type="button" class="btn" id="b-limpar">Limpar filtros</button>
+    </div>
+    <p class="recorte" id="recorte" aria-live="polite"></p>
+    <div class="aviso warn" id="aviso-parcial" hidden role="status"><span class="ic" aria-hidden="true">▲</span><div id="aviso-parcial-txt"></div></div>
+    <div class="aviso info" id="aviso-publico" hidden role="note"><span class="ic" aria-hidden="true">ⓘ</span><div id="aviso-publico-txt"></div></div>
+  </div>
+</div>
+
+<main id="conteudo" class="wrap" tabindex="-1">
+  <!-- VISÃO GERAL -->
+  <section class="aba" id="p-geral" role="tabpanel" aria-labelledby="t-geral">
+    <h2 class="sr">Visão Geral</h2>
+    <div class="kpis" id="kpis-geral"></div>
+    <div class="grade">
+      <figure class="card c8" id="fig-serie">
+        <figcaption>Notificações por ano</figcaption>
+        <p class="nota" id="nota-serie"></p>
+        <div class="legenda" id="leg-serie"></div>
+        <div class="grafico"><canvas id="g-serie" role="img"></canvas></div>
+      </figure>
+      <figure class="card c4" id="fig-sem">
+        <figcaption>1º semestre (jan–jun) de cada ano</figcaption>
+        <p class="nota">Única comparação justa com o ano parcial. O ano parcial ainda pode receber notificações atrasadas.</p>
+        <div class="grafico"><canvas id="g-sem" role="img"></canvas></div>
+      </figure>
+      <figure class="card c7" id="fig-polo">
+        <figcaption id="cap-polo"></figcaption>
+        <p class="nota">Considera todos os municípios (ignora o filtro de município) e todos os anos. Ano parcial em pontilhado.</p>
+        <div class="legenda" id="leg-polo"></div>
+        <div class="grafico"><canvas id="g-polo" role="img"></canvas></div>
+      </figure>
+      <figure class="card c5" id="fig-comp">
+        <figcaption>Qualidade dos dados (completude)</figcaption>
+        <p class="nota" id="nota-comp"></p>
+        <div class="rolagem" id="tab-comp"></div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- PERFIL -->
+  <section class="aba" id="p-perfil" role="tabpanel" aria-labelledby="t-perfil" hidden>
+    <h2 class="sr">Perfil dos casos</h2>
+    <div class="kpis" id="kpis-perfil"></div>
+    <div class="grade">
+      <figure class="card c6" id="fig-pir">
+        <figcaption>Pirâmide etária: faixa etária por sexo</figcaption>
+        <p class="nota" id="nota-pir"></p>
+        <div class="legenda" id="leg-pir"></div>
+        <div class="grafico alto"><canvas id="g-pir" role="img"></canvas></div>
+      </figure>
+      <figure class="card c6" id="fig-exp">
+        <figcaption>Categoria de exposição informada, por período</figcaption>
+        <p class="nota" id="nota-exp"></p>
+        <div class="legenda" id="leg-exp"></div>
+        <div class="grafico alto"><canvas id="g-exp" role="img"></canvas></div>
+      </figure>
+    </div>
+    <h2>Gestantes e transmissão vertical</h2>
+    <div class="kpis" id="kpis-gest"></div>
+    <div class="grade">
+      <figure class="card c7" id="fig-gest">
+        <figcaption>Gestantes notificadas por momento da gestação, por ano</figcaption>
+        <p class="nota">Momento da gestação na notificação, não no diagnóstico. Gestantes com HIV têm ficha própria no SINAN, que não está nesta base: os números podem estar incompletos.</p>
+        <div class="legenda" id="leg-gest"></div>
+        <div class="grafico"><canvas id="g-gest" role="img"></canvas></div>
+      </figure>
+      <figure class="card c5" id="fig-raca-esc">
+        <figcaption>Raça/cor e escolaridade</figcaption>
+        <p class="nota">A escolaridade mudou muito após 2020, provavelmente por mudança no registro (ver Notas).</p>
+        <div class="rolagem" id="tab-raca"></div>
+        <div class="rolagem" id="tab-esc" style="margin-top:.75rem"></div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- MUNICÍPIOS -->
+  <section class="aba" id="p-mun" role="tabpanel" aria-labelledby="t-mun" hidden>
+    <h2 class="sr">Comparação entre municípios</h2>
+    <div class="aviso info" role="note"><span class="ic" aria-hidden="true">ⓘ</span><div>Números absolutos dependem do tamanho da população e não indicam risco. Não há população nesta base para calcular taxas.</div></div>
+    <div class="grade">
+      <figure class="card c7" id="fig-mun">
+        <figcaption>Notificações no recorte, por município</figcaption>
+        <p class="nota" id="nota-mun"></p>
+        <div class="grafico alto"><canvas id="g-mun" role="img"></canvas></div>
+      </figure>
+      <figure class="card c5" id="fig-resumo">
+        <figcaption>Resumo por município</figcaption>
+        <p class="nota" id="nota-resumo"></p>
+        <div class="rolagem" id="tab-resumo"></div>
+      </figure>
+      <figure class="card c12" id="fig-calor">
+        <figcaption>Notificações por município e ano</figcaption>
+        <p class="nota">Cor mais escura = mais notificações (escala comprimida para mostrar os municípios pequenos). Leia os números.</p>
+        <div class="rolagem" id="tab-calor"></div>
+      </figure>
+      <figure class="card c7" id="fig-fluxo">
+        <figcaption>Onde os residentes foram notificados</figcaption>
+        <p class="nota">Mostra o fluxo de pacientes: o município da unidade que notificou, em relação ao de residência.</p>
+        <div class="legenda" id="leg-fluxo"></div>
+        <div class="grafico alto"><canvas id="g-fluxo" role="img"></canvas></div>
+      </figure>
+      <figure class="card c5" id="fig-part">
+        <figcaption id="cap-part"></figcaption>
+        <p class="nota">Ignora o filtro de município. Ano parcial em pontilhado.</p>
+        <div class="grafico"><canvas id="g-part" role="img"></canvas></div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- NOTAS -->
+  <section class="aba" id="p-notas" role="tabpanel" aria-labelledby="t-notas" hidden>
+    <h2>Notas metodológicas e limitações</h2>
+    <div class="notas" id="notas"></div>
+  </section>
+</main>
+
+<footer><div class="wrap" id="rodape"></div></footer>
+
+<script type="application/json" id="dados">/*__DADOS__*/</script>
+<script>
+(function(){
+"use strict";
+const D = JSON.parse(document.getElementById("dados").textContent);
+const P = D.parametros, C = D.categorias;
+const NF = new Intl.NumberFormat("pt-BR");
+const PF = new Intl.NumberFormat("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1});
+const PUB = !!D.meta.versao_publica, LIM = P.privacidade_ocultar_ate;
+const pequeno = n => PUB && n>=1 && n<=LIM;
+const SUP = "<"+(LIM+1);
+const fmt = n => n==null ? "—" : pequeno(n) ? SUP : NF.format(n);
+const supV = v => pequeno(v) ? null : v;
+const pct = x => x==null ? "—" : PF.format(x)+"%";
+const sinal = x => x==null ? "—" : (x>0?"+":"")+PF.format(x)+"%";
+const dataBR = s => { const [a,m,d]=s.split("-"); return `${d}/${m}/${a}`; };
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const INSUF = "n insuficiente";
+
+// tabelas -> objetos
+const T = {};
+for (const [k,t] of Object.entries(D.tabelas)) {
+  T[k] = t.linhas.map(r => Object.fromEntries(t.colunas.map((c,i)=>[c,r[i]])));
+}
+const ANOS = D.anos;
+const anoInfo = Object.fromEntries(ANOS.map(a=>[a.ano,a]));
+const MUNS = D.municipios.map(m=>m.nome);
+const POLO = P.municipio_polo;
+const FAIXAS = C.faixa;
+const TP = T.perfil || T.base;   // cubo com sexo e faixa
+const totalMunPeriodo = {}; T.base.forEach(r=>{ totalMunPeriodo[r.municipio]=(totalMunPeriodo[r.municipio]||0)+r.n; });
+
+// ---------------- estado e filtros ----------------
+const padrao = () => ({ini:P.ano_padrao[0], fim:P.ano_padrao[1], mun:new Set(MUNS), sexo:"Todos", faixa:new Set(FAIXAS)});
+let S = padrao();
+
+function filtra(rows, o={}) {
+  // Versão pública: sexo e faixa só filtram na aba Perfil (nas outras abas não há esse cruzamento)
+  const semPessoa = PUB && document.querySelector('[role="tab"][aria-selected="true"]').id!=="t-perfil";
+  return rows.filter(r =>
+    (o.semAno || (r.ano>=S.ini && r.ano<=S.fim)) &&
+    (o.semMun || r.municipio===undefined || S.mun.has(r.municipio)) &&
+    (r.sexo===undefined || semPessoa || S.sexo==="Todos" || r.sexo===S.sexo) &&
+    (r.faixa===undefined || semPessoa || S.faixa.has(r.faixa)));
+}
+const soma = rows => rows.reduce((s,r)=>s+r.n,0);
+function agrupa(rows, ...keys){ const m=new Map(); rows.forEach(r=>{const k=keys.map(x=>r[x]).join("|"); m.set(k,(m.get(k)||0)+r.n);}); return m; }
+const g1 = (rows,key)=>{ const m={}; rows.forEach(r=>{m[r[key]]=(m[r[key]]||0)+r.n;}); return m; };
+const proporcao = (a,b) => (b>=P.limiar_n_minimo && !pequeno(a)) ? 100*a/b : null;
+const pctN = (a,b) => pequeno(a) ? SUP+" casos" : (b ? pct(100*a/b) : "—");
+const anosNoIntervalo = () => ANOS.filter(a=>a.ano>=S.ini && a.ano<=S.fim);
+
+function montaFiltros(){
+  const si=document.getElementById("f-ano-ini"), sf=document.getElementById("f-ano-fim");
+  ANOS.forEach(a=>{ for (const s of [si,sf]) { const o=document.createElement("option"); o.value=a.ano; o.textContent=a.rotulo; s.appendChild(o);} });
+  si.addEventListener("change",()=>{S.ini=+si.value; if(S.ini>S.fim){S.fim=S.ini;} atualiza();});
+  sf.addEventListener("change",()=>{S.fim=+sf.value; if(S.fim<S.ini){S.ini=S.fim;} atualiza();});
+
+  const lm=document.getElementById("lista-mun");
+  MUNS.forEach((m,i)=>{ const l=document.createElement("label"); l.innerHTML=`<input type="checkbox" value="${esc(m)}" checked> ${esc(m)} <small>${fmt(totalMunPeriodo[m]||0)}</small>`; lm.appendChild(l); });
+  lm.addEventListener("change",e=>{ if(e.target.checked) S.mun.add(e.target.value); else S.mun.delete(e.target.value); if(!S.mun.size){S.mun.add(e.target.value); e.target.checked=true;} atualiza(); });
+  document.getElementById("b-polo").textContent = POLO;
+  document.getElementById("b-demais").textContent = `Demais ${MUNS.length-1}`;
+  document.querySelectorAll("[data-mun]").forEach(b=>b.addEventListener("click",()=>{
+    const t=b.dataset.mun; S.mun = new Set(t==="todos"?MUNS : t==="polo"?[POLO] : MUNS.filter(m=>m!==POLO)); atualiza();
+  }));
+  document.querySelector("#d-mun small") && null;
+
+  const fs=document.getElementById("f-sexo");
+  ["Todos",...C.sexo.filter(s=>soma(TP.filter(r=>r.sexo===s))>0)].forEach(s=>{const o=document.createElement("option"); o.value=s; o.textContent=s; fs.appendChild(o);});
+  fs.addEventListener("change",()=>{S.sexo=fs.value; atualiza();});
+
+  const lf=document.getElementById("lista-faixa");
+  FAIXAS.forEach(f=>{ const l=document.createElement("label"); l.innerHTML=`<input type="checkbox" value="${esc(f)}" checked> ${esc(f)}`; lf.appendChild(l); });
+  lf.addEventListener("change",e=>{ if(e.target.checked) S.faixa.add(e.target.value); else S.faixa.delete(e.target.value); if(!S.faixa.size){S.faixa.add(e.target.value); e.target.checked=true;} atualiza(); });
+  document.getElementById("b-faixa-todas").addEventListener("click",()=>{S.faixa=new Set(FAIXAS); atualiza();});
+  document.getElementById("b-limpar").addEventListener("click",()=>{S=padrao(); atualiza();});
+  // fecha dropdown com Esc / clique fora
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape") document.querySelectorAll("details.drop[open]").forEach(d=>{d.open=false; d.querySelector("summary").focus();}); });
+  document.addEventListener("click",e=>{ document.querySelectorAll("details.drop[open]").forEach(d=>{ if(!d.contains(e.target)) d.open=false; }); });
+}
+function sincronizaFiltros(){
+  document.getElementById("f-ano-ini").value=S.ini; document.getElementById("f-ano-fim").value=S.fim;
+  document.getElementById("f-sexo").value=S.sexo;
+  document.querySelectorAll("#lista-mun input").forEach(i=>i.checked=S.mun.has(i.value));
+  document.querySelectorAll("#lista-faixa input").forEach(i=>i.checked=S.faixa.has(i.value));
+  const sm = S.mun.size===MUNS.length ? "Todos" : S.mun.size===1 ? [...S.mun][0] : (S.mun.size===MUNS.length-1 && !S.mun.has(POLO)) ? `Demais ${MUNS.length-1}` : `${S.mun.size} municípios`;
+  document.getElementById("s-mun").textContent = sm;
+  const sf = S.faixa.size===FAIXAS.length ? "Todas" : S.faixa.size<=2 ? [...S.faixa].join(", ") : `${S.faixa.size} faixas`;
+  document.getElementById("s-faixa").textContent = sf;
+  const abaPerfil = document.querySelector('[role="tab"][aria-selected="true"]').id==="t-perfil";
+  const n = soma(filtra(abaPerfil ? TP : T.base));
+  const anoTxt = S.ini===S.fim ? anoInfo[S.ini].rotulo : `${S.ini}–${S.fim}`;
+  document.getElementById("recorte").innerHTML = `Recorte: <b>${esc(anoTxt)}</b> · <b>${esc(PUB&&abaPerfil?`${MUNS.length} municípios`:sm)}</b>${PUB&&!abaPerfil?"":` · <b>${esc(S.sexo==="Todos"?"Ambos os sexos":S.sexo)}</b> · <b>${esc(sf==="Todas"?"Todas as idades":sf)}</b>`} · n = <b>${fmt(n)}</b> notificações`;
+  ajustaFiltrosPublico(abaPerfil);
+  const parc = anosNoIntervalo().filter(a=>a.status!=="completo");
+  const av = document.getElementById("aviso-parcial");
+  if (parc.length){ av.hidden=false; document.getElementById("aviso-parcial-txt").textContent = parc.map(a=>a.status==="parcial" ? `${a.ano} tem apenas ${a.meses_com_dados} meses de dados: não compare com anos completos.` : `${a.ano} não tem dados nesta base.`).join(" "); }
+  else av.hidden=true;
+}
+
+// ---------------- cores e Chart.js ----------------
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const COR_EXP = {"Heterossexual":"--s1","Homossexual":"--s2","Bissexual":"--s3","Drogas injetáveis":"--s4","Vertical":"--s5","Outras":"--s7","Ignorado":"--neutro"};
+const COR_FLUXO = {"Próprio município":"--s1","Santarém":"--s2","Outro município":"--s3"};
+const COR_GEST = {"1º trimestre":"--s1","2º trimestre":"--s2","3º trimestre":"--s3","Idade gestacional ignorada":"--neutro"};
+const temChart = typeof window.Chart !== "undefined";
+const charts = {};
+function hachura(cor){
+  const c=document.createElement("canvas"); c.width=c.height=8; const x=c.getContext("2d");
+  x.strokeStyle=cor; x.lineWidth=2; x.beginPath(); x.moveTo(0,8); x.lineTo(8,0); x.moveTo(-2,2); x.lineTo(2,-2); x.moveTo(6,10); x.lineTo(10,6); x.stroke();
+  return x.createPattern(c,"repeat");
+}
+function baseOpts(extra={}){
+  const grid=css("--grade"), txt=css("--text-2");
+  return Object.assign({
+    responsive:true, maintainAspectRatio:false, animation:false,
+    plugins:{legend:{display:false}, tooltip:{callbacks:{}}},
+    scales:{x:{grid:{display:false},ticks:{color:txt}}, y:{beginAtZero:true,grid:{color:grid},ticks:{color:txt,precision:0,callback:v=>NF.format(v)}}}
+  }, extra);
+}
+const rotuloTopo = {id:"rotuloTopo", afterDatasetsDraw(ch,_,o){
+  if(!o || !o.ativo) return; const ctx=ch.ctx; ctx.save(); ctx.fillStyle=css("--text"); ctx.font="600 12px system-ui,sans-serif"; ctx.textAlign="center";
+  ch.data.datasets.forEach((ds,di)=>{ const meta=ch.getDatasetMeta(di); if(meta.hidden) return;
+    meta.data.forEach((el,i)=>{ const v=ds.data[i]; const x=el.x;
+      if(v==null){ if(o.vazio && o.vazio[i]){ ctx.fillStyle=css("--text-3"); ctx.fillText(o.vazio[i], x, ch.chartArea.bottom-8); ctx.fillStyle=css("--text"); } return; }
+      ctx.fillText(fmt(v), x, el.y-6); }); });
+  ctx.restore(); }};
+const faixaDestaque = {id:"faixaDestaque", beforeDatasetsDraw(ch,_,o){
+  if(!o || !o.indices || !o.indices.length) return; const xs=ch.scales.x, ctx=ch.ctx;
+  const i0=Math.min(...o.indices), i1=Math.max(...o.indices);
+  const passo = xs.getPixelForValue(1)-xs.getPixelForValue(0);
+  const x0 = xs.getPixelForValue(i0)-passo/2, x1 = xs.getPixelForValue(i1)+passo/2;
+  ctx.save(); ctx.fillStyle=css("--surface-2"); ctx.fillRect(x0, ch.chartArea.top, x1-x0, ch.chartArea.bottom-ch.chartArea.top);
+  ctx.fillStyle=css("--text-3"); ctx.font="11px system-ui,sans-serif"; ctx.textAlign="center"; ctx.fillText(o.rotulo,(x0+x1)/2,ch.chartArea.top+12); ctx.restore(); }};
+if (temChart) { Chart.register(rotuloTopo, faixaDestaque); Chart.defaults.font.family = "system-ui,-apple-system,'Segoe UI',Roboto,sans-serif"; }
+
+function desenha(id, cfg, resumo, tabelaHTML){
+  const cv=document.getElementById(id), fig=cv.closest("figure");
+  cv.setAttribute("aria-label", resumo);
+  let det = fig.querySelector("details.tabela");
+  if(!det){ det=document.createElement("details"); det.className="tabela"; det.innerHTML="<summary>Ver como tabela</summary><div class='rolagem'></div>"; fig.appendChild(det); }
+  det.querySelector(".rolagem").innerHTML = tabelaHTML;
+  if(!temChart){ cv.parentElement.innerHTML = `<div class="sem-grafico">Gráfico indisponível (biblioteca não carregou, verifique a internet). ${esc(resumo)}</div>`; det.open=true; return; }
+  if(charts[id]) charts[id].destroy();
+  charts[id] = new Chart(cv, cfg);
+}
+function tabela(cab, linhas, rodape){
+  return `<table><thead><tr>${cab.map(c=>`<th scope="col">${esc(c)}</th>`).join("")}</tr></thead><tbody>${linhas.map(l=>`<tr>${l.map((c,i)=>i===0?`<th scope="row">${c}</th>`:`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody>${rodape?`<tfoot><tr>${rodape.map(c=>`<td>${c}</td>`).join("")}</tr></tfoot>`:""}</table>`;
+}
+function legenda(id, itens){ document.getElementById(id).innerHTML = itens.map(([t,cor,cls])=>`<span><i class="${cls||""}" style="${cls?"":`background:${cor}`}"></i>${esc(t)}</span>`).join(""); }
+function kpis(id, itens){
+  document.getElementById(id).innerHTML = itens.map(k=>`<div class="kpi"><div class="rot">${esc(k.rot)}</div><div class="val ${k.val===INSUF?"insuf":""}">${esc(k.val)}</div><div class="det">${k.det||""}</div></div>`).join("");
+}
+
+// ---------------- Visão Geral ----------------
+function ultimoCompleto(){ const c=anosNoIntervalo().filter(a=>a.status==="completo"); return c.length?c[c.length-1].ano:null; }
+function variacao(serie, ano){
+  const ant=anoInfo[ano-1]; if(!ant || ant.status!=="completo" || anoInfo[ano].status!=="completo") return null;
+  const a=serie[ano-1]||0, b=serie[ano]||0; if(a<P.limiar_variacao || pequeno(b)) return null; return 100*(b-a)/a;
+}
+function renderGeral(){
+  const rows = filtra(T.base);
+  const n = soma(rows);
+  const porAnoTodos = g1(filtra(T.base,{semAno:true}),"ano");
+  const uc = ultimoCompleto();
+  const v = uc ? variacao(porAnoTodos, uc) : null;
+  const regiao = soma(filtra(T.base,{semMun:true}));
+  const todos = S.mun.size===MUNS.length;
+  const nPolo = soma(rows.filter(r=>r.municipio===POLO));
+  const parc = anosNoIntervalo().some(a=>a.status==="parcial");
+  kpis("kpis-geral",[
+    {rot:"Notificações no período", val:fmt(n), det:`${S.ini===S.fim?S.ini:S.ini+"–"+S.fim}${parc?" · inclui ano parcial":""}`},
+    {rot:`Último ano completo${uc?` (${uc})`:""}`, val: uc?fmt(porAnoTodos[uc]||0):"—", det: uc?"no recorte filtrado":"nenhum ano completo no intervalo"},
+    {rot: uc?`Variação ${uc-1}→${uc}`:"Variação anual", val: uc ? (v==null?INSUF:sinal(v)) : "—", det: uc ? (v==null?`ano anterior com menos de ${P.limiar_variacao} notificações ou incompleto`:`${fmt(porAnoTodos[uc-1]||0)} → ${fmt(porAnoTodos[uc]||0)}`) : ""},
+    todos ? {rot:`Participação de ${POLO}`, val: proporcao(nPolo,n)==null?INSUF:pct(proporcao(nPolo,n)), det:`${fmt(nPolo)} de ${fmt(n)} notificações`}
+          : {rot:"Participação do recorte nos " + MUNS.length + " municípios", val: proporcao(n,regiao)==null?INSUF:pct(proporcao(n,regiao)), det:`${fmt(n)} de ${fmt(regiao)}`}
+  ]);
+
+  // série completa (ignora filtro de ano)
+  const labels = ANOS.map(a=>a.status==="completo"?String(a.ano):a.ano+"*");
+  const dados = ANOS.map(a=>a.status==="sem_dados"?null:(porAnoTodos[a.ano]||0));
+  const s1=css("--s1");
+  const cores = ANOS.map(a=>a.status==="parcial"?hachura(s1):s1);
+  const destIdx = ANOS.map((a,i)=>P.destaque_series.anos.includes(a.ano)?i:-1).filter(i=>i>=0);
+  const vazio = ANOS.map(a=>a.status==="sem_dados"?"sem dados":null);
+  document.getElementById("nota-serie").textContent = "Mostra todos os anos do projeto (ignora o filtro de ano); os demais filtros valem. " + ANOS.filter(a=>a.status!=="completo").map(a=>`${a.ano}*: ${a.status==="parcial"?`parcial (${a.meses_com_dados} meses)`:"sem dados na base"}`).join("; ") + ".";
+  legenda("leg-serie",[["Ano completo",s1],["Ano parcial",null,"hach"]]);
+  desenha("g-serie",{type:"bar",data:{labels,datasets:[{data:dados,backgroundColor:cores,borderColor:s1,borderWidth:ANOS.map(a=>a.status==="parcial"?1.5:0),borderRadius:4,maxBarThickness:48}]},
+    options:baseOpts({plugins:{legend:{display:false},rotuloTopo:{ativo:true,vazio},faixaDestaque:{indices:destIdx,rotulo:P.destaque_series.rotulo},
+      tooltip:{callbacks:{title:it=>ANOS[it[0].dataIndex].rotulo,label:it=>{const a=ANOS[it.dataIndex];const vv=variacao(porAnoTodos,a.ano);return [`${fmt(it.raw)} notificações`, vv==null?"":`variação: ${sinal(vv)}`];}}}},
+      layout:{padding:{top:18}}})},
+    "Barras de notificações por ano: "+ANOS.map(a=>`${a.rotulo}: ${a.status==="sem_dados"?"sem dados":fmt(porAnoTodos[a.ano]||0)}`).join("; "),
+    tabela(["Ano","Notificações","Variação","Situação"], ANOS.map(a=>[esc(a.rotulo), a.status==="sem_dados"?"—":fmt(porAnoTodos[a.ano]||0), a.status==="completo"?(variacao(porAnoTodos,a.ano)==null?"—":sinal(variacao(porAnoTodos,a.ano))):"não comparável", a.status==="completo"?"completo":a.status==="parcial"?"parcial":"sem dados"])));
+
+  // 1º semestre
+  const comDados = ANOS.filter(a=>a.status!=="sem_dados" && a.meses_com_dados>=6);
+  const sem = g1(filtra(T.base,{semAno:true}).filter(r=>r.semestre===1),"ano");
+  desenha("g-sem",{type:"bar",data:{labels:comDados.map(a=>String(a.ano)),datasets:[{data:comDados.map(a=>sem[a.ano]||0),backgroundColor:css("--s1"),borderRadius:4,maxBarThickness:36}]},
+    options:baseOpts({plugins:{legend:{display:false},rotuloTopo:{ativo:true},tooltip:{callbacks:{label:it=>`${fmt(it.raw)} notificações em jan–jun`}}},layout:{padding:{top:18}}})},
+    "Notificações de janeiro a junho por ano: "+comDados.map(a=>`${a.ano}: ${fmt(sem[a.ano]||0)}`).join("; "),
+    tabela(["Ano","Jan–jun"], comDados.map(a=>[a.ano, fmt(sem[a.ano]||0)])));
+
+  // polo x demais (ignora município e ano)
+  const rAll = filtra(T.base,{semMun:true,semAno:true});
+  const anosD = ANOS.filter(a=>a.status!=="sem_dados");
+  const pol = g1(rAll.filter(r=>r.municipio===POLO),"ano"), dem = g1(rAll.filter(r=>r.municipio!==POLO),"ano");
+  const nomeDem = `Demais ${MUNS.length-1} municípios`;
+  document.getElementById("cap-polo").textContent = `${POLO} × ${nomeDem.toLowerCase()}`;
+  legenda("leg-polo",[[POLO,css("--s1")],[nomeDem,css("--s2")]]);
+  const parcIdx = anosD.map(a=>a.status==="parcial");
+  const linha = (lab,obj,cor)=>({label:lab,data:anosD.map(a=>obj[a.ano]||0),borderColor:cor,backgroundColor:cor,borderWidth:2,pointRadius:4,
+    pointBackgroundColor:anosD.map(a=>a.status==="parcial"?css("--surface"):cor),
+    segment:{borderDash:c=>parcIdx[c.p1DataIndex]?[5,4]:undefined}});
+  desenha("g-polo",{type:"line",data:{labels:anosD.map(a=>a.status==="completo"?String(a.ano):a.ano+"*"),datasets:[linha(POLO,pol,css("--s1")),linha(nomeDem,dem,css("--s2"))]},
+    options:baseOpts({interaction:{mode:"index",intersect:false},plugins:{legend:{display:false},faixaDestaque:{indices:anosD.map((a,i)=>P.destaque_series.anos.includes(a.ano)?i:-1).filter(i=>i>=0),rotulo:P.destaque_series.rotulo},tooltip:{callbacks:{title:it=>anosD[it[0].dataIndex].rotulo,label:it=>`${it.dataset.label}: ${fmt(it.raw)}`}}}})},
+    `Linhas por ano. ${POLO}: `+anosD.map(a=>`${a.ano} ${fmt(pol[a.ano]||0)}`).join(", ")+`. ${nomeDem}: `+anosD.map(a=>`${a.ano} ${fmt(dem[a.ano]||0)}`).join(", "),
+    tabela(["Ano",POLO,nomeDem], anosD.map(a=>[esc(a.rotulo),fmt(pol[a.ano]||0),fmt(dem[a.ano]||0)])));
+
+  renderCompletude();
+}
+function selo(p, campo){
+  if (P.campos_criticos_desatualizacao.includes(campo)) return `<span class="selo crit"><span aria-hidden="true">✖</span> Crítico</span>`;
+  if (p==null) return `<span class="insuf">${INSUF}</span>`;
+  if (p<P.completude_bom_max) return `<span class="selo ok"><span aria-hidden="true">✔</span> Bom</span>`;
+  if (p<=P.completude_atencao_max) return `<span class="selo warn"><span aria-hidden="true">▲</span> Atenção</span>`;
+  return `<span class="selo crit"><span aria-hidden="true">✖</span> Crítico</span>`;
+}
+function renderCompletude(){
+  const linhas=[];
+  const add=(nome,campo,rows,col,valIgn)=>{ const tot=soma(rows), ig=soma(rows.filter(r=>r[col]===valIgn)); const p=proporcao(ig,tot);
+    linhas.push([esc(nome), p==null?`<span class="insuf">${INSUF}</span>`:pct(p), fmt(ig), selo(p,campo)]); };
+  add("Sexo","sexo",filtra(TP),"sexo","Ignorado");
+  add("Idade","faixa",filtra(TP),"faixa","Ignorada");
+  add("Raça/cor","raca",filtra(T.raca),"raca","Ignorado");
+  add("Escolaridade","escolaridade",filtra(T.escolaridade),"escolaridade","Ignorado");
+  add("Exposição","exposicao",filtra(T.exposicao),"exposicao","Ignorado");
+  add("Gestante (mulheres)","gestante",S.sexo==="Masculino"?[]:filtra(T.gestante),"gestante","Ignorado");
+  add("Evolução","evolucao",filtra(T.evolucao),"evolucao","Ignorado");
+  document.getElementById("tab-comp").innerHTML = tabela(["Campo","% ignorado","n","Situação"], linhas);
+  document.getElementById("nota-comp").textContent = `Bom: menos de ${P.completude_bom_max}% ignorado · Atenção: ${P.completude_bom_max}% a ${P.completude_atencao_max}% · Crítico: mais de ${P.completude_atencao_max}%. A evolução é marcada como crítica porque quase nunca é atualizada após a notificação, mesmo com poucos ignorados.${PUB?" Na versão pública, a completude é sempre da região inteira.":""}`;
+}
+
+// ---------------- Perfil ----------------
+function renderPerfil(){
+  const rows=filtra(TP), n=soma(rows);
+  const sx=g1(rows,"sexo"); const h=sx["Masculino"]||0, m=sx["Feminino"]||0;
+  const fx=g1(rows,"faixa"); const comIdade = n-(fx["Ignorada"]||0);
+  const jov = P.faixa_jovem.reduce((s,f)=>s+(fx[f]||0),0);
+  const ex=g1(filtra(T.exposicao),"exposicao"); const nEx=soma(filtra(T.exposicao));
+  const faixaJovTxt = `${P.faixa_jovem[0].split("-")[0]} a ${P.faixa_jovem[P.faixa_jovem.length-1].split("-")[1]} anos`;
+  kpis("kpis-perfil",[
+    {rot:"Notificações no recorte", val:fmt(n), det:`${fmt(h)} homens · ${fmt(m)} mulheres`},
+    {rot:"Razão homem/mulher", val: (m>=P.limiar_n_minimo && S.sexo==="Todos") ? PF.format(h/m) : INSUF, det: S.sexo!=="Todos"?"filtro de sexo ativo":`homens por mulher notificada`},
+    {rot:`Pessoas de ${faixaJovTxt}`, val: proporcao(jov,comIdade)==null?INSUF:pct(proporcao(jov,comIdade)), det:`${fmt(jov)} de ${fmt(comIdade)} com idade informada`},
+    {rot:"Exposição ignorada", val: proporcao(ex["Ignorado"]||0,nEx)==null?INSUF:pct(proporcao(ex["Ignorado"]||0,nEx)), det:`${fmt(ex["Ignorado"]||0)} notificações`}
+  ]);
+
+  // pirâmide
+  const fxs = FAIXAS.filter(f=>f!=="Ignorada" && S.faixa.has(f)).slice().reverse();
+  const mf = agrupa(rows,"faixa","sexo");
+  const get=(f,s)=>mf.get(f+"|"+s)||0;
+  document.getElementById("nota-pir").textContent = `Barras à esquerda: homens; à direita: mulheres. Sem idade informada: ${fmt(fx["Ignorada"]||0)}.`;
+  legenda("leg-pir",[["Masculino",css("--s1")],["Feminino",css("--s2")]]);
+  desenha("g-pir",{type:"bar",data:{labels:fxs,datasets:[
+      {label:"Masculino",data:fxs.map(f=>supV(get(f,"Masculino"))==null?null:-get(f,"Masculino")),backgroundColor:css("--s1"),borderRadius:4,barPercentage:.85,categoryPercentage:.9},
+      {label:"Feminino",data:fxs.map(f=>supV(get(f,"Feminino"))),backgroundColor:css("--s2"),borderRadius:4,barPercentage:.85,categoryPercentage:.9}]},
+    options:baseOpts({indexAxis:"y",plugins:{legend:{display:false},tooltip:{callbacks:{label:it=>`${it.dataset.label}: ${fmt(Math.abs(it.raw))}`}}},
+      scales:{x:{stacked:true,grid:{color:css("--grade")},ticks:{color:css("--text-2"),callback:v=>NF.format(Math.abs(v))}},y:{stacked:true,grid:{display:false},ticks:{color:css("--text-2")}}}})},
+    "Pirâmide etária. "+fxs.slice().reverse().map(f=>`${f}: ${fmt(get(f,"Masculino"))} homens, ${fmt(get(f,"Feminino"))} mulheres`).join("; "),
+    tabela(["Faixa","Masculino","Feminino","Total"], fxs.slice().reverse().map(f=>[f,fmt(get(f,"Masculino")),fmt(get(f,"Feminino")),fmt(get(f,"Masculino")+get(f,"Feminino"))])));
+
+  // exposição por período
+  const per = P.periodos_comparacao.map(([a,b])=>[Math.max(a,S.ini),Math.min(b,S.fim)]).filter(([a,b])=>a<=b);
+  const expRows = filtra(T.exposicao,{semAno:true});
+  const cats = C.exposicao.filter(c=>soma(expRows.filter(r=>r.exposicao===c))>0);
+  const perDados = per.map(([a,b])=>{ const rr=expRows.filter(r=>r.ano>=a&&r.ano<=b && anoInfo[r.ano].status==="completo"); return {rot:`${a}–${b}`, n:soma(rr), g:g1(rr,"exposicao")}; }).filter(p=>p.n>0);
+  document.getElementById("nota-exp").textContent = `Percentual de cada categoria no período (só anos completos dentro do filtro de ano). Informada pelo paciente; "Ignorado" incluído. Períodos com menos de ${P.limiar_n_minimo} notificações não são exibidos.`;
+  const perOk = perDados.filter(p=>p.n>=P.limiar_n_minimo);
+  legenda("leg-exp", cats.map(c=>[c,css(COR_EXP[c])]));
+  desenha("g-exp",{type:"bar",data:{labels:perOk.map(p=>`${p.rot} (n=${fmt(p.n)})`),datasets:cats.map(c=>({label:c,data:perOk.map(p=>pequeno(p.g[c]||0)?null:100*(p.g[c]||0)/p.n),backgroundColor:css(COR_EXP[c]),borderColor:css("--surface"),borderWidth:{right:2},borderSkipped:false}))},
+    options:baseOpts({indexAxis:"y",plugins:{legend:{display:false},tooltip:{callbacks:{label:it=>`${it.dataset.label}: ${pct(it.raw)} (${fmt(perOk[it.dataIndex].g[it.dataset.label]||0)})`}}},
+      scales:{x:{stacked:true,max:100,grid:{color:css("--grade")},ticks:{color:css("--text-2"),callback:v=>v+"%"}},y:{stacked:true,grid:{display:false},ticks:{color:css("--text-2")}}}})},
+    "Categoria de exposição por período. "+perOk.map(p=>p.rot+": "+cats.map(c=>`${c} ${pctN(p.g[c]||0,p.n)}`).join(", ")).join(". "),
+    perOk.length ? tabela(["Categoria",...perOk.map(p=>`${p.rot} n`),...perOk.map(p=>`${p.rot} %`)], cats.map(c=>[esc(c),...perOk.map(p=>fmt(p.g[c]||0)),...perOk.map(p=>pctN(p.g[c]||0,p.n))])) : `<p class="insuf">${INSUF}</p>`);
+
+  // gestantes
+  const gRows = S.sexo==="Masculino" ? [] : filtra(T.gestante);
+  const mulheres = soma(gRows);
+  const GEST = ["1º trimestre","2º trimestre","3º trimestre","Idade gestacional ignorada"];
+  const gest = soma(gRows.filter(r=>GEST.includes(r.gestante)));
+  const tri1 = soma(gRows.filter(r=>r.gestante==="1º trimestre"));
+  const vert = ex["Vertical"]||0;
+  kpis("kpis-gest",[
+    {rot:"Gestantes entre as mulheres notificadas", val: proporcao(gest,mulheres)==null?INSUF:pct(proporcao(gest,mulheres)), det:`${fmt(gest)} de ${fmt(mulheres)} mulheres`},
+    {rot:"Gestantes notificadas no 1º trimestre", val: proporcao(tri1,gest)==null?INSUF:pct(proporcao(tri1,gest)), det:`${fmt(tri1)} de ${fmt(gest)} gestantes`},
+    {rot:"Transmissão vertical (mãe para filho)", val: fmt(vert), det:"notificações na categoria de exposição perinatal"}
+  ]);
+  const anosG = anosNoIntervalo().filter(a=>a.status!=="sem_dados");
+  const ga = agrupa(gRows,"ano","gestante");
+  const gc = GEST.filter(g=>gRows.some(r=>r.gestante===g));
+  legenda("leg-gest", gc.map(g=>[g,css(COR_GEST[g])]));
+  desenha("g-gest",{type:"bar",data:{labels:anosG.map(a=>a.status==="completo"?String(a.ano):a.ano+"*"),datasets:gc.map(g=>({label:g,data:anosG.map(a=>supV(ga.get(a.ano+"|"+g)||0)),backgroundColor:css(COR_GEST[g]),borderColor:css("--surface"),borderWidth:{top:2},borderSkipped:false}))},
+    options:baseOpts({plugins:{legend:{display:false},tooltip:{callbacks:{title:it=>anosG[it[0].dataIndex].rotulo,label:it=>`${it.dataset.label}: ${fmt(it.raw)}`}}},scales:{x:{stacked:true,grid:{display:false},ticks:{color:css("--text-2")}},y:{stacked:true,beginAtZero:true,grid:{color:css("--grade")},ticks:{precision:0,color:css("--text-2")}}}})},
+    "Gestantes por ano e momento da gestação. "+anosG.map(a=>`${a.ano}: `+gc.map(g=>`${g} ${fmt(ga.get(a.ano+"|"+g)||0)}`).join(", ")).join("; "),
+    tabela(["Ano",...gc], anosG.map(a=>[esc(a.rotulo),...gc.map(g=>fmt(ga.get(a.ano+"|"+g)||0))])));
+
+  // raça e escolaridade
+  const tabDist=(rows,col,ordem,titulo)=>{ const t=soma(rows), g=g1(rows,col); const cs=ordem.filter(c=>(g[c]||0)>0);
+    return tabela([titulo,"n","%"], cs.map(c=>[esc(c),fmt(g[c]||0), proporcao(g[c]||0,t)==null?`<span class="insuf">${INSUF}</span>`:pct(proporcao(g[c]||0,t))]), ["Total",fmt(t),t?"100%":"—"]); };
+  document.getElementById("tab-raca").innerHTML = tabDist(filtra(T.raca),"raca",C.raca,"Raça/cor");
+  document.getElementById("tab-esc").innerHTML = tabDist(filtra(T.escolaridade),"escolaridade",C.escolaridade,"Escolaridade");
+}
+
+// ---------------- Municípios ----------------
+function renderMun(){
+  const rows=filtra(T.base); const pm=g1(rows,"municipio");
+  const sel = MUNS.filter(m=>S.mun.has(m)).sort((a,b)=>(pm[b]||0)-(pm[a]||0));
+  const s1=css("--s1"), claro=css("--s1-claro");
+  document.getElementById("nota-mun").textContent = `Barras claras: menos de ${P.limiar_poucos_casos} notificações no recorte (poucos casos: percentuais e variações instáveis).`;
+  const fig=document.getElementById("g-mun").parentElement; fig.style.height = Math.max(260, 34*sel.length+60)+"px";
+  desenha("g-mun",{type:"bar",data:{labels:sel,datasets:[{data:sel.map(m=>supV(pm[m]||0)),backgroundColor:sel.map(m=>(pm[m]||0)<P.limiar_poucos_casos?claro:s1),borderRadius:4,maxBarThickness:26}]},
+    options:baseOpts({indexAxis:"y",layout:{padding:{right:48}},plugins:{legend:{display:false},tooltip:{callbacks:{label:it=>`${fmt(it.raw)} notificações${it.raw<P.limiar_poucos_casos?" (poucos casos)":""}`}}},
+      scales:{x:{beginAtZero:true,grid:{color:css("--grade")},ticks:{color:css("--text-2"),callback:v=>NF.format(v)}},y:{grid:{display:false},ticks:{color:css("--text-2")}}}}),
+    plugins:[{id:"rotDir",afterDatasetsDraw(ch){const ctx=ch.ctx;ctx.save();ctx.fillStyle=css("--text");ctx.font="600 12px system-ui,sans-serif";ctx.textBaseline="middle";ch.getDatasetMeta(0).data.forEach((el,i)=>{const v=ch.data.datasets[0].data[i]; ctx.fillText(v==null?SUP:NF.format(v), v==null?ch.chartArea.left+6:el.x+6, el.y);});ctx.restore();}}]},
+    "Notificações por município: "+sel.map(m=>`${m} ${fmt(pm[m]||0)}`).join("; "),
+    tabela(["Município","Notificações"], sel.map(m=>[esc(m),fmt(pm[m]||0)])));
+
+  // resumo
+  const reg = soma(filtra(T.base,{semMun:true}));
+  const porMunAno = agrupa(filtra(T.base,{semAno:true}),"municipio","ano");
+  const uc = ultimoCompleto();
+  document.getElementById("nota-resumo").textContent = `% da região = participação nos ${MUNS.length} municípios com os mesmos filtros de ano, sexo e idade. ` + (uc?`Variação ${uc-1}→${uc}, só quando ${uc-1} teve ${P.limiar_variacao} ou mais notificações.`:"Sem ano completo no intervalo para calcular variação.");
+  const linhasR = sel.map(m=>{ const s={}; ANOS.forEach(a=>s[a.ano]=porMunAno.get(m+"|"+a.ano)||0); const v=uc?variacao(s,uc):null;
+    return [esc(m), fmt(pm[m]||0), proporcao(pm[m]||0,reg)==null?`<span class="insuf">${INSUF}</span>`:pct(proporcao(pm[m]||0,reg)), uc?(v==null?`<span class="insuf">${INSUF}</span>`:sinal(v)):"—"]; });
+  document.getElementById("tab-resumo").innerHTML = tabela(["Município","n","% da região",uc?`Var. ${uc-1}→${uc}`:"Variação"], linhasR, ["Total selecionado", fmt(soma(rows)), proporcao(soma(rows),reg)==null?INSUF:pct(proporcao(soma(rows),reg)), ""]);
+
+  // mapa de calor (HTML)
+  const anosI = anosNoIntervalo();
+  const ordem = MUNS.filter(m=>S.mun.has(m)).sort((a,b)=>(pm[b]||0)-(pm[a]||0));
+  const ma = agrupa(rows,"municipio","ano"); let max=0; ma.forEach(v=>{if(v>max)max=v;});
+  const h0=css("--heat-0"), h1=css("--heat-1");
+  const mix=(t)=>{ const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)); const a=p(h0),b=p(h1); return a.map((x,i)=>Math.round(x+(b[i]-x)*t)); };
+  const cel=v=>{ if(pequeno(v)) return `<td class="cel insuf">${SUP}</td>`; if(max===0) return `<td class="cel">${fmt(v)}</td>`; const t=Math.pow(v/max,.45); const [r,g,b]=mix(t); const lum=(0.2126*r+0.7152*g+0.0722*b)/255; return `<td class="cel" style="background:rgb(${r},${g},${b});color:${lum<0.55?"#ffffff":"#111111"}">${fmt(v)}</td>`; };
+  document.getElementById("tab-calor").innerHTML = `<table class="calor"><caption class="sr">Notificações por município (linhas) e ano (colunas)</caption><thead><tr><th scope="col">Município</th>${anosI.map(a=>`<th scope="col">${a.status==="completo"?a.ano:a.ano+"*"}</th>`).join("")}<th scope="col">Total</th></tr></thead><tbody>${
+    ordem.map(m=>`<tr><th scope="row">${esc(m)}</th>${anosI.map(a=>a.status==="sem_dados"?`<td class="cel insuf">sem dados</td>`:cel(ma.get(m+"|"+a.ano)||0)).join("")}<td><b>${fmt(pm[m]||0)}</b></td></tr>`).join("")
+  }</tbody></table><p class="nota">${anosI.filter(a=>a.status!=="completo").map(a=>`${a.ano}*: ${a.status==="parcial"?`parcial (${a.meses_com_dados} meses)`:"sem dados na base"}`).join(" · ")}</p>`;
+
+  // fluxo
+  const fr = filtra(T.fluxo); const fm = agrupa(fr,"municipio","local_notificacao"); const ft=g1(fr,"municipio");
+  const locs = C.local_notificacao.filter(l=>fr.some(r=>r.local_notificacao===l));
+  const selF = ordem.filter(m=>(ft[m]||0)>=P.limiar_n_minimo);
+  const excl = ordem.filter(m=>(ft[m]||0)<P.limiar_n_minimo);
+  legenda("leg-fluxo", locs.map(l=>[l==="Santarém"?`Notificado em ${POLO}`:l==="Próprio município"?"No próprio município":"Em outro município",css(COR_FLUXO[l])]));
+  const ff=document.getElementById("g-fluxo").parentElement; ff.style.height = Math.max(220, 34*selF.length+60)+"px";
+  desenha("g-fluxo",{type:"bar",data:{labels:selF,datasets:locs.map(l=>({label:l,data:selF.map(m=>pequeno(fm.get(m+"|"+l)||0)?null:100*(fm.get(m+"|"+l)||0)/ft[m]),backgroundColor:css(COR_FLUXO[l]),borderColor:css("--surface"),borderWidth:{right:2},borderSkipped:false}))},
+    options:baseOpts({indexAxis:"y",plugins:{legend:{display:false},tooltip:{callbacks:{label:it=>`${it.dataset.label}: ${pct(it.raw)} (${fmt(fm.get(selF[it.dataIndex]+"|"+it.dataset.label)||0)})`}}},
+      scales:{x:{stacked:true,max:100,grid:{color:css("--grade")},ticks:{color:css("--text-2"),callback:v=>v+"%"}},y:{stacked:true,grid:{display:false},ticks:{color:css("--text-2")}}}})},
+    "Local de notificação por município de residência: "+selF.map(m=>m+": "+locs.map(l=>`${l} ${pctN(fm.get(m+"|"+l)||0,ft[m])}`).join(", ")).join("; ")+(excl.length?`. Não exibidos (n insuficiente): ${excl.join(", ")}`:""),
+    tabela(["Município de residência",...locs.map(l=>l+" (n)"),"Total"], ordem.map(m=>[esc(m),...locs.map(l=>fmt(fm.get(m+"|"+l)||0)),fmt(ft[m]||0)])) + (excl.length?`<p class="nota">Fora do gráfico por ter menos de ${P.limiar_n_minimo} notificações: ${excl.map(esc).join(", ")}.</p>`:""));
+
+  // participação do polo por ano
+  const anosP = anosNoIntervalo().filter(a=>a.status!=="sem_dados");
+  const rr = filtra(T.base,{semMun:true}); const tA=g1(rr,"ano"), pA=g1(rr.filter(r=>r.municipio===POLO),"ano");
+  document.getElementById("cap-part").textContent = `Participação de ${POLO} no total, por ano`;
+  const val = anosP.map(a=>proporcao(pA[a.ano]||0,tA[a.ano]||0));
+  const parcP = anosP.map(a=>a.status==="parcial");
+  desenha("g-part",{type:"line",data:{labels:anosP.map(a=>a.status==="completo"?String(a.ano):a.ano+"*"),datasets:[{data:val,borderColor:s1,backgroundColor:s1,borderWidth:2,pointRadius:4,pointBackgroundColor:anosP.map(a=>a.status==="parcial"?css("--surface"):s1),segment:{borderDash:c=>parcP[c.p1DataIndex]?[5,4]:undefined}}]},
+    options:baseOpts({plugins:{legend:{display:false},tooltip:{callbacks:{title:it=>anosP[it[0].dataIndex].rotulo,label:it=>`${pct(it.raw)} (${fmt(pA[anosP[it.dataIndex].ano]||0)} de ${fmt(tA[anosP[it.dataIndex].ano]||0)})`}}},
+      scales:{x:{grid:{display:false},ticks:{color:css("--text-2")}},y:{min:0,max:100,grid:{color:css("--grade")},ticks:{color:css("--text-2"),callback:v=>v+"%"}}}})},
+    `Participação de ${POLO} por ano: `+anosP.map((a,i)=>`${a.ano} ${val[i]==null?INSUF:pct(val[i])}`).join(", "),
+    tabela(["Ano",`${POLO} (n)`,"Total (n)","%"], anosP.map((a,i)=>[esc(a.rotulo),fmt(pA[a.ano]||0),fmt(tA[a.ano]||0),val[i]==null?INSUF:pct(val[i])])));
+}
+
+// ---------------- Notas Metodológicas e Limitações (texto fixo + números do JSON) ----------------
+function renderNotas(){
+  const M=D.meta, cf=D.conferencia;
+  const parc=ANOS.filter(a=>a.status==="parcial"), sem=ANOS.filter(a=>a.status==="sem_dados");
+  const poucos = MUNS.filter(m=>(cf.por_municipio[m]||0)<P.limiar_poucos_casos);
+  const N = M.n_total;
+  const ign = (rows,col,val)=>{ const t=soma(rows), i=soma(rows.filter(r=>r[col]===val)); return {i, p:t?100*i/t:null}; };
+  const comp = [
+    ["Sexo", ign(T.base,"sexo","Ignorado")], ["Idade", ign(T.base,"faixa","Ignorada")],
+    ["Raça/cor", ign(T.raca,"raca","Ignorado")], ["Escolaridade", ign(T.escolaridade,"escolaridade","Ignorado")],
+    ["Categoria de exposição", ign(T.exposicao,"exposicao","Ignorado")], ["Evolução", ign(T.evolucao,"evolucao","Ignorado")]];
+  const vivos = cf.por_evolucao["Vivo"]||0;
+  const fora = N - (cf.por_local_notificacao["Próprio município"]||0);
+  const noPolo = cf.por_local_notificacao[POLO]||0;
+  const polo = cf.por_municipio[POLO]||0;
+  const ultCompleto = ANOS.filter(a=>a.status==="completo").slice(-1)[0];
+  const fontes = M.fontes.map(f=>`<li>${esc(f.nome)}.${f.url?` Disponível em: <a href="${esc(f.url)}" rel="noopener">${esc(f.url)}</a>.`:""} Acesso em: ${dataBR(f.acesso)}.</li>`).join("");
+  document.getElementById("notas").innerHTML = `
+  <p>Esta página explica, em linguagem simples, de onde vêm os números do painel, o que eles mostram e, principalmente, <b>o que eles não mostram</b>. Leia antes de usar os dados para decidir.</p>
+
+  <h3>1. De onde vêm os dados</h3>
+  <ul>
+    <li>Os dados são as <b>fichas de notificação de HIV (adulto)</b> registradas no ${esc(M.fonte)}, no arquivo <code>${esc(M.arquivo_origem)}</code>. A última notificação do arquivo é de ${dataBR(M.data_corte_extracao)}.</li>
+    <li>O painel mostra <b>${fmt(N)} notificações</b> de pessoas que moram em ${M.n_municipios} municípios do Baixo Amazonas: ${D.municipios.map(m=>esc(m.nome)).join(", ")}.</li>
+    <li>Cada notificação é contada no <b>${esc(M.referencia_temporal)}</b>, e não no ano em que a pessoa se infectou nem, necessariamente, no ano do diagnóstico.</li>
+    <li>O tratamento dos dados (limpeza, códigos, duplicados) está descrito em <code>resultados/decisoes_limpeza.md</code>, e os totais foram conferidos por um método independente em <code>resultados/auditoria.md</code>.</li>
+  </ul>
+
+  <h3>2. Notificação não é incidência</h3>
+  <ul>
+    <li><b>Incidência</b> seria o número de pessoas que se infectaram com HIV num período. <b>Notificação</b> é o número de pessoas que foram <b>diagnosticadas e registradas</b> no SINAN.</li>
+    <li>Por isso, quando as notificações sobem, isso pode significar mais infecções, <b>mas também</b> mais testagem, mais serviços ou um registro melhor. Quando caem, pode ser menos infecções, <b>ou</b> menos testagem e atraso no registro. O painel não permite separar essas explicações.</li>
+    <li>Muitas pessoas são notificadas anos depois de se infectar. O número de um ano mistura casos recentes e antigos.</li>
+  </ul>
+
+  <h3>3. Subnotificação</h3>
+  <ul>
+    <li>Nem toda pessoa com HIV é testada, e nem todo diagnóstico vira notificação. Os números do painel são, portanto, <b>um mínimo</b>: a quantidade real de pessoas vivendo com HIV na região é maior.</li>
+    <li>A subnotificação não é igual em todo lugar: municípios com menos serviços de testagem tendem a notificar menos. Uma diferença entre municípios pode refletir diferença de acesso, não de epidemia.</li>
+    <li>Gestantes, crianças e casos de aids têm outras fichas no SINAN, que não estão nesta base. Óbitos são registrados em outro sistema (SIM).</li>
+  </ul>
+
+  <h3>4. Anos parciais e dados que chegam atrasados</h3>
+  <ul>
+    ${parc.map(a=>`<li><b>${a.ano} está incompleto:</b> só há ${a.meses_com_dados} meses de dados (até ${dataBR(M.data_corte_extracao)}). No painel ele aparece hachurado e com asterisco (*). <b>Não compare ${a.ano} com anos completos</b>; para isso use o gráfico do 1º semestre.</li>`).join("")}
+    ${sem.map(a=>`<li><b>${a.ano} não está na base.</b> Ele aparece na série apenas como "sem dados", o que não significa zero casos.</li>`).join("")}
+    <li>Mesmo os anos mais recentes considerados completos${ultCompleto?` (como ${ultCompleto.ano})`:""} podem ainda receber notificações digitadas com atraso.</li>
+    <li>As fichas entram no sistema em lotes (meses sem nenhum registro seguidos de picos). Por isso o painel não mostra números mês a mês.</li>
+  </ul>
+
+  <h3>5. Informações ignoradas ou em branco</h3>
+  <ul>
+    <li>Quando um campo da ficha não é preenchido, ele aparece como <b>"Ignorado"</b>. No período todo, o percentual de ignorados foi: ${comp.map(([n,c])=>`${esc(n)} ${c.p==null?"—":pct(c.p)}`).join("; ")}.</li>
+    <li>Pouco "Ignorado" não garante informação correta. A <b>evolução</b> do caso quase nunca é atualizada depois da notificação: ${pct(100*vivos/N)} constam como "vivo". Por isso o painel não mostra mortalidade.</li>
+    <li>A escolaridade muda bruscamente a partir de 2020, o que sugere mudança na forma de preencher, não necessariamente no perfil das pessoas.</li>
+    <li>A categoria de exposição (como a pessoa provavelmente se infectou) é informada pela própria pessoa sobre um tema sensível; pode haver erro ou omissão.</li>
+  </ul>
+
+  <h3>6. Sem taxas por população: só números absolutos e participação</h3>
+  <ul>
+    <li>Esta base não traz a população de cada município. Sem população, <b>não é possível calcular taxas</b> (casos por 100 mil habitantes) nem dizer qual município tem maior risco.</li>
+    <li>Por isso o painel compara municípios apenas em <b>números absolutos</b> (quantas notificações) e em <b>participação percentual</b> (quanto cada município representa no total da região). Exemplo: ${esc(POLO)} tem ${fmt(polo)} das ${fmt(N)} notificações (${pct(100*polo/N)}), o que se espera do município mais populoso e com mais serviços; isso <b>não</b> quer dizer que o risco lá seja maior.</li>
+    <li>Em municípios pequenos, poucos casos mudam muito os percentuais. ${poucos.map(esc).join(", ")} têm menos de ${P.limiar_poucos_casos} notificações no período todo. O painel não mostra percentuais quando há menos de ${P.limiar_n_minimo} notificações no grupo ("n insuficiente"). Zero notificações num ano não significa ausência de HIV.</li>
+    <li>Mudanças ao longo do tempo (por exemplo, durante a pandemia de covid-19) aparecem no painel, mas <b>os dados não permitem dizer a causa</b>.</li>
+  </ul>
+
+  <h3>7. Município de residência</h3>
+  <ul>
+    <li>Cada notificação é contada no <b>município onde a pessoa mora</b>, e não onde foi atendida. É o padrão usado pelo Ministério da Saúde e permite, no futuro, calcular taxas com a população de cada município.</li>
+    <li>Isso importa porque muitas pessoas são atendidas fora do seu município: ${fmt(fora)} das ${fmt(N)} notificações (${pct(100*fora/N)}) foram feitas por um serviço de outro município, ${fmt(noPolo)} delas em ${esc(POLO)}. A aba "Comparação entre municípios" mostra esse fluxo.</li>
+    <li>O endereço registrado é o informado na notificação; mudanças de endereço depois disso não aparecem.</li>
+  </ul>
+
+  <h3>8. Privacidade e LGPD</h3>
+  <ul>
+    <li>Informações sobre saúde e vida sexual são <b>dados pessoais sensíveis</b> pela Lei Geral de Proteção de Dados (Lei nº 13.709/2018, art. 5º, II). O uso desses dados é permitido para tutela da saúde e para estudos em saúde pública, com cuidados de segurança (arts. 11 e 13).</li>
+    <li>Este painel usa <b>apenas contagens agregadas</b> (${PUB?"ano × município; e, para a região inteira, ano × sexo × faixa etária × uma característica":"ano × município × sexo × faixa etária × uma característica"}). Não contém nome, endereço, data de nascimento, data exata de notificação nem qualquer registro individual.</li>
+    ${PUB ? `<li><b>Esta é a versão pública do painel.</b> Para reduzir o risco de identificação, ela não cruza município com sexo, idade ou outras características (o perfil é sempre da região inteira), e toda contagem de 1 a ${LIM} aparece como "${SUP}"; percentuais calculados sobre esses grupos também ficam ocultos. Ainda assim, combinar filtros diferentes pode permitir deduzir alguns valores pequenos por subtração; por isso a versão completa, com todos os cruzamentos, fica restrita à equipe da SESPA.</li>` : `<li>Mesmo agregados, alguns grupos têm pouquíssimas pessoas (por exemplo, um único caso num município pequeno, numa faixa etária). Combinados, eles poderiam ajudar a identificar alguém. Por isso esta versão do painel é <b>para uso interno da vigilância</b>. Antes de qualquer divulgação externa, contagens de 1 a ${P.privacidade_ocultar_ate} devem ser ocultadas (a versão pública já faz isso).</li>`}
+    <li>A base com registros individuais (<code>${esc(M.base_tratada)}</code>) não deve ser compartilhada fora da equipe.</li>
+  </ul>
+
+  <h3>9. Definições usadas no painel</h3>
+  <ul>
+    <li><b>Ano parcial</b>: ano com menos de 12 meses de dados (asterisco e hachura).</li>
+    <li><b>Variação anual</b>: (ano − ano anterior) ÷ ano anterior × 100, só entre anos completos e quando o ano anterior tem pelo menos ${P.limiar_variacao} notificações.</li>
+    <li><b>Faixas etárias</b>: ${FAIXAS.map(esc).join(", ")}. <b>Categoria de exposição</b> agrupada em: ${C.exposicao.map(esc).join(", ")}.</li>
+    <li><b>Gestante</b>: mulher com idade gestacional informada (1º, 2º, 3º trimestre ou ignorada). <b>Local de notificação</b>: município do serviço que notificou, comparado com o de residência.</li>
+    <li><b>Completude</b>: % de "Ignorado". Bom &lt; ${P.completude_bom_max}%, Atenção ${P.completude_bom_max}%–${P.completude_atencao_max}%, Crítico &gt; ${P.completude_atencao_max}%.</li>
+    <li><b>Comparação de períodos</b> (aba Perfil): ${P.periodos_comparacao.map(p=>p.join("–")).join(" × ")}.</li>
+  </ul>
+  <div class="rolagem">${tabela(["Indicador","Como é calculado"],[
+    ["Notificações","contagem de notificações no recorte"],
+    ["Variação anual","(ano − ano anterior) ÷ ano anterior × 100"],
+    ["1º semestre","notificações de janeiro a junho de cada ano"],
+    ["Participação","notificações do município (ou recorte) ÷ notificações da região × 100"],
+    ["Razão homem/mulher","homens ÷ mulheres notificados"],
+    ["% jovens","notificações na faixa jovem ÷ notificações com idade informada × 100"],
+    ["Categoria de exposição","notificações da categoria ÷ total × 100 (com Ignorado)"],
+    ["% gestantes","gestantes ÷ mulheres notificadas × 100"],
+    ["% gestantes no 1º trimestre","gestantes no 1º trimestre ÷ gestantes × 100"],
+    ["Transmissão vertical","notificações na categoria perinatal"],
+    ["Local de notificação","notificações por local (próprio município, polo, outro) ÷ total × 100"],
+    ["Completude","ignorados ÷ total × 100, por campo"]].map(r=>r.map(esc)))}</div>
+
+  <h3>10. Fontes</h3>
+  <ul>${fontes}</ul>
+
+  <h3>11. Atualização e contato</h3>
+  <ul>
+    <li>Para atualizar com um novo arquivo do SINAN: rodar <code>scripts/02_limpeza.py</code>, <code>scripts/05_dados_dashboard.py</code>, <code>scripts/06_build_dashboard.py</code> e conferir com <code>scripts/05_auditoria.py</code>. Dados agregados gerados em ${dataBR(M.gerado_em)}.</li>
+    <li>Contato da equipe responsável: a definir pela SESPA.</li>
+  </ul>`;
+}
+
+// ---------------- abas ----------------
+function montaAbas(){
+  const tabs=[...document.querySelectorAll('[role="tab"]')];
+  const ativa=(t,foco)=>{ tabs.forEach(x=>{const on=x===t; x.setAttribute("aria-selected",on); x.tabIndex=on?0:-1; document.getElementById(x.getAttribute("aria-controls")).hidden=!on;});
+    if(foco) t.focus(); document.getElementById("filtros").hidden = t.id==="t-notas"; try{history.replaceState(null,"","#"+t.id.slice(2));}catch(e){} atualiza(); };
+  tabs.forEach((t,i)=>{ t.addEventListener("click",()=>ativa(t)); t.addEventListener("keydown",e=>{ let j=null; if(e.key==="ArrowRight")j=(i+1)%tabs.length; if(e.key==="ArrowLeft")j=(i-1+tabs.length)%tabs.length; if(e.key==="Home")j=0; if(e.key==="End")j=tabs.length-1; if(j!=null){e.preventDefault(); ativa(tabs[j],true);} }); });
+  const h=location.hash.slice(1); const ini=tabs.find(t=>t.id==="t-"+h); if(ini) ativa(ini);
+}
+function abaAtiva(){ return document.querySelector('[role="tab"][aria-selected="true"]').id; }
+function renderAtiva(){ const a=abaAtiva(); if(a==="t-geral")renderGeral(); else if(a==="t-perfil")renderPerfil(); else if(a==="t-mun")renderMun(); else renderNotas(); }
+function atualiza(){ sincronizaFiltros(); renderAtiva(); }
+function ajustaFiltrosPublico(abaPerfil){
+  const av=document.getElementById("aviso-publico");
+  if(!PUB){ av.hidden=true; return; }
+  document.getElementById("f-sexo").disabled = !abaPerfil;
+  document.getElementById("d-faixa").classList.toggle("desab", !abaPerfil);
+  document.getElementById("s-faixa").setAttribute("aria-disabled", String(!abaPerfil));
+  document.getElementById("d-mun").classList.toggle("desab", abaPerfil);
+  document.getElementById("s-mun").setAttribute("aria-disabled", String(abaPerfil));
+  av.hidden=false;
+  document.getElementById("aviso-publico-txt").textContent = (abaPerfil
+    ? `Versão pública: o perfil é sempre dos ${MUNS.length} municípios juntos (o filtro de município não se aplica nesta aba).`
+    : `Versão pública: nesta aba os filtros de sexo e faixa etária não se aplicam (não há cruzamento de município com sexo ou idade).`)
+    + ` Contagens de 1 a ${LIM} aparecem como "${SUP}".`;
+}
+
+// ---------------- cabeçalho e rodapé ----------------
+const M=D.meta;
+document.getElementById("titulo").textContent = M.titulo + (PUB ? " · versão pública" : "");
+document.getElementById("subtitulo").textContent = `Notificações de HIV (SINAN) · residentes em ${M.n_municipios} municípios da Região de Saúde do Baixo Amazonas (PA)`;
+document.getElementById("atualizacao").textContent = `Dados até ${dataBR(M.ultima_notificacao_regiao)} · SESPA · Vigilância Epidemiológica`;
+document.getElementById("rodape").innerHTML = `<p><b>Fonte:</b> ${esc(M.fonte)}. Arquivo ${esc(M.arquivo_origem)}, notificações até ${dataBR(M.data_corte_extracao)}. Processamento: projeto da disciplina Introdução à Ciência de Dados. Dados agregados gerados em ${dataBR(M.gerado_em)}.</p><p>Notificação não é incidência: há subnotificação, e os números dependem da testagem e do registro. ${PUB ? `Versão pública: sem cruzamento de município com sexo ou idade; contagens de 1 a ${LIM} ocultadas ("${SUP}").` : "Painel para uso interno da vigilância epidemiológica."}</p>`;
+
+montaFiltros(); montaAbas(); atualiza();
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>renderAtiva());
+let rt; window.addEventListener("resize",()=>{clearTimeout(rt); rt=setTimeout(()=>{Object.values(charts).forEach(c=>c.resize());},150);});
+})();
+</script>
+</body>
+</html>

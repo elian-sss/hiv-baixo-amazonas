@@ -1,0 +1,11 @@
+# Dados individuais (dados sensíveis de saúde, LGPD) — nunca publicar
+HIV16_25.csv
+dados/hiv_baixo_amazonas.csv
+
+# Versão INTERNA do painel (cruza município com sexo, idade e outras características) — só SESPA
+dados/dados_dashboard.json
+dashboard/index_interno.html
+
+# Python
+__pycache__/
+*.pyc

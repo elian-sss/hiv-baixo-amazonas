@@ -1,0 +1,59 @@
+PROMPTS DO PROJETO — Dashboard de HIV, Baixo Amazonas (SESPA/PA)
+Disciplina: Introdução à Ciência de Dados · Análise de Dados Conversacional
+Prompts enviados ao assistente, na ordem, com o texto original.
+O que foi feito em cada etapa está em DIARIO.md.
+
+======================================================================
+PROMPT 1 — Configuração do projeto
+======================================================================
+Você será meu assistente de análise de dados em um projeto da disciplina Introdução à Ciência de Dados. Esta pasta tem HIV16_25.csv (notificações de HIV do SINAN, Brasil), HIVAN_DIC_DADOS_1_.pdf (dicionário de dados).
+OBJETIVO: dashboard de HIV para a vigilância epidemiológica da SESPA (Pará), Região do Baixo Amazonas, 13 municípios: Alenquer, Almeirim, Belterra, Curuá, Faro, Juruti, Mojuí dos Campos, Monte Alegre, Óbidos, Oriximiná, Prainha, Santarém e Terra Santa. PERÍODO: 2016 a 2025.
+FORMATO: Análise de Dados Conversacional: eu peço em linguagem natural, você escreve e executa o código aqui na pasta e explica o resultado.
+Crie agora dois arquivos: (1) CLAUDE.md com este contexto e as regras abaixo; (2) DIARIO.md, onde você registrará, ao fim de cada etapa, o prompt que recebi, o que foi feito, as decisões e os problemas encontrados.
+REGRAS: (1) nunca invente números, todo valor vem de cálculo sobre os arquivos; (2) nunca altere os arquivos originais; (3) salve código em scripts/, bases tratadas em dados/, tabelas e relatórios em resultados/ e o dashboard em dashboard/; (4) se o dado não permitir uma conclusão, diga; (5) sinalize limitações (subnotificação, ignorados, anos incompletos) e lembre que notificação não é incidência; (6) responda em português do Brasil, em linguagem para gestores de saúde.
+Depois proponha as etapas até o dashboard.
+
+======================================================================
+PROMPT 2 — Dicionário de dados
+======================================================================
+Leia HIVAN_DIC_DADOS_1_.pdf. Salve em resultados/dicionario_resumo.md os campos relevantes para vigilância (data, município de residência, sexo, idade, raça/cor, escolaridade, gestante, categoria de exposição, critério, evolução) com significado e categorias. Explique como decodificar NU_IDADE_N, a diferença entre município de notificação e de residência (e qual usar) e quais campos têm risco de baixa qualidade. Não analise dados ainda.
+
+======================================================================
+PROMPT 3 — Perfil da base
+======================================================================
+Leia HIV16_25.csv desta pasta (tudo como texto, dtype=str). Informe linhas e colunas, ignore a coluna de índice sem nome, mostre a distribuição de NU_ANO, TP_NOT e ID_AGRAVO, a proporção de ausentes por coluna (incluindo "********") e duplicados. Diga o que chama atenção, principalmente anos cobertos e anos incompletos. Salve o código em scripts/01_perfil.py e o resultado em resultados/perfil_hiv.md.
+
+======================================================================
+PROMPT 4 — Limpeza e recorte
+======================================================================
+Na base de HIV: (1) filtre os 13 municípios pelo município de RESIDÊNCIA (ID_MN_RESI, 7 dígitos): [1500404, 1500503, 1501451, 1501956, 1503002, 1503903, 1504752, 1505106, 1505304, 1505502, 1506005, 1506807, 1507979] e crie a coluna MUNICIPIO com os nomes; (2) converta datas AAAAMMDD, tratando "********" como ausente; (3) decodifique a idade e crie faixas (<15, 15-19, 20-24, 25-29, 30-39, 40-49, 50-59, 60+); (4) rotule sexo, raça/cor, escolaridade, gestante, evolução e categoria de exposição (agrupada em heterossexual, homossexual, bissexual, drogas injetáveis, vertical, outras, ignorado); (5) mostre casos por município e por ano, a contagem mensal por ano para identificar anos incompletos e diga se 2025 existe. Salve o código em scripts/02_limpeza.py, a base em dados/hiv_baixo_amazonas.csv e documente cada decisão em resultados/decisoes_limpeza.md.
+
+======================================================================
+PROMPT 5 — Séries temporais
+======================================================================
+Para o HIV nos 13 municípios, calcule casos por ano, variação percentual anual e a participação percentual de cada município no total de cada ano, e compare os municípios em números absolutos. Não calcule taxas por habitante, pois não temos população. Aponte municípios com poucos casos, anos parciais (2024) e possíveis efeitos da pandemia em 2020–2021, sem afirmar causalidade. Salve tabelas e gráficos em resultados/ e o código em scripts/03_series.py.
+
+======================================================================
+PROMPT 6 — Perfil dos casos e achados
+======================================================================
+Descreva o perfil dos casos de HIV: sexo, faixa etária, raça/cor, escolaridade, categoria de exposição, gestantes e evolução, e como mudou entre 2016 e 2023, informando o percentual de ignorados em cada campo. Depois escreva 5 achados principais, cada um com o número que o sustenta, o período, a limitação do dado e uma pergunta de vigilância. Não inclua nada que não tenha sido calculado. Salve em resultados/achados_hiv.md e o código em scripts/04_perfil.py.
+
+======================================================================
+PROMPT 7 — Desenho do dashboard (wireframe)
+======================================================================
+O público é a equipe de vigilância epidemiológica da SESPA. Com base nas análises, proponha: 5 perguntas que ela precisa responder rápido; para cada uma, o indicador e a visualização ideal; no máximo 12 indicadores com fórmula e fonte; filtros globais (ano, município, sexo, faixa etária); e o que NÃO deve entrar por limitação dos dados. Depois desenhe um wireframe em texto com as abas: Visão Geral, Perfil dos casos, Comparação entre municípios e Notas Metodológicas. Salve em resultados/wireframe.md.
+
+======================================================================
+PROMPT 8 — Dados agregados e dashboard
+======================================================================
+Gere dados/dados_dashboard.json com as tabelas agregadas (HIV por ano, município, sexo, faixa etária, categoria de exposição e evolução), sem dados individuais e com coluna que marque anos parciais, e mostre os totais para eu conferir. Em seguida construa o dashboard do wireframe em dashboard/index.html, um arquivo único (pode usar Chart.js por CDN), com dados embutidos, filtros, KPIs, série 2016–2025 com anos parciais sinalizados, aviso de subnotificação, rodapé com a fonte (SINAN/Ministério da Saúde) e boa acessibilidade (contraste, celular). Nenhum número pode ficar fixo fora do JSON.
+
+======================================================================
+PROMPT 9 — Auditoria, notas metodológicas e relatório
+======================================================================
+(1) Recalcule por método independente os totais por ano e município de HIV a partir de dados/hiv_baixo_amazonas.csv e compare com o JSON do dashboard, listando divergências e correções (scripts/05_auditoria.py, resultados/auditoria.md). (2) Escreva as "Notas Metodológicas e Limitações" em linguagem simples (subnotificação, anos parciais, ignorados, notificação x incidência, ausência de taxas por população (comparação só em números absolutos e participação percentual), município de residência e LGPD, com fontes e data de acesso) e inclua na aba correspondente do dashboard. (3) Gere RELATORIO.md com um resumo de uma página do processo, a partir do DIARIO.md, e um roteiro de apresentação de 5 minutos.
+
+======================================================================
+PROMPT 10 — Publicação e resumo em PDF
+======================================================================
+coloca todos os prompts em um arquivo txt, sobe no github e manda o link pra acessar o dashboard no github pages e me dá um resumo da interpretação dos principais achados em um pdf
